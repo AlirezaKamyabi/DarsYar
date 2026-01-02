@@ -1,4 +1,3 @@
-// server/models/Resource.js
 const mongoose = require('mongoose');
 
 const ResourceSchema = new mongoose.Schema({
@@ -25,3 +24,5 @@ const ResourceSchema = new mongoose.Schema({
         ref: 'User'
     }
 }, { timestamps: true });
+
+module.exports = mongoose.model('Resource', ResourceSchema);
