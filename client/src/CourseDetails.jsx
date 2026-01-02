@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import TaskManager from './TaskManager';
 
 const CourseDetails = () => {
     const { id } = useParams();
@@ -138,6 +139,8 @@ const CourseDetails = () => {
                     </ul>
                 )}
             </div>
+            {/* Add the Task Manager Section */}
+    <TaskManager courseId={id} />
         </div>
     );
 };
