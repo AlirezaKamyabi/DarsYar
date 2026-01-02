@@ -13,6 +13,7 @@
     app.use(express.json());
 
     app.use('/api/auth', require('./routes/authRoutes'));
+    app.use('/api/courses', require('./routes/courseRoutes'));
 
     app.get('/', (req, res) => res.send('✅ DarsYar API is Running!'));
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
