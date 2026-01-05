@@ -1,7 +1,11 @@
+import ChatBox from './ChatBox';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import TaskManager from './TaskManager';
+
+// Import our components
+import TaskManager from './TaskManager';     // <--- The Task List
+import FeedbackSection from './FeedbackSection'; // <--- NEW: The Reviews
 
 const CourseDetails = () => {
     const { id } = useParams();
@@ -9,18 +13,17 @@ const CourseDetails = () => {
     const [course, setCourse] = useState(null);
     const [resources, setResources] = useState([]);
     
-    // -- NEW: State for the "Add Resource" Form --
+    // Add Resource Form State
     const [showForm, setShowForm] = useState(false);
     const [newTitle, setNewTitle] = useState('');
     const [newLink, setNewLink] = useState('');
     const [newType, setNewType] = useState('PDF');
 
-    // Get User Info for permission
     const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
     useEffect(() => {
         if (!userInfo) {
-            navigate('/'); // Kick user out if not logged in
+            navigate('/');
         } else {
             fetchDetails();
         }
@@ -36,26 +39,18 @@ const CourseDetails = () => {
         }
     };
 
-    // -- NEW: Function to handle the Upload --
     const handleAddResource = async (e) => {
         e.preventDefault();
         try {
-            const config = {
-                headers: { Authorization: `Bearer ${userInfo.token}` }
-            };
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            await axios.post(`http://localhost:5000/api/courses/${id}/resources`, 
+                { title: newTitle, type: newType, fileUrl: newLink }, config);
             
-            await axios.post(
-                `http://localhost:5000/api/courses/${id}/resources`, 
-                { title: newTitle, type: newType, fileUrl: newLink },
-                config
-            );
-            
-            // Success! Reset form and refresh list
             alert('Resource Added Successfully!');
             setShowForm(false);
             setNewTitle('');
             setNewLink('');
-            fetchDetails(); // Reload the list to show the new file
+            fetchDetails();
         } catch (error) {
             alert('Error adding resource.');
         }
@@ -72,75 +67,66 @@ const CourseDetails = () => {
             
             <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
                 
-                {/* Header Section */}
+                {/* Header */}
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                     <div>
                         <h1 style={{ color: '#2c3e50', margin:0 }}>{course.courseName}</h1>
                         <p style={{ color: '#7f8c8d', margin:'5px 0' }}>{course.semester} | Dr. {course.instructor}</p>
                     </div>
-                    
-                    {/* The NEW Button */}
-                    <button 
-                        onClick={() => setShowForm(!showForm)} 
-                        style={{ padding: '10px 20px', backgroundColor: '#27ae60', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
+                    <button onClick={() => setShowForm(!showForm)} style={{ padding: '10px 20px', backgroundColor: '#27ae60', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
                         {showForm ? 'Close Form' : '+ Add Resource'}
                     </button>
                 </div>
 
-                {/* The NEW Form (Only shows when button is clicked) */}
+                {/* Add Resource Form */}
                 {showForm && (
                     <div style={{ marginTop: '20px', padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '10px', border: '2px dashed #27ae60' }}>
                         <h3 style={{marginTop: 0}}>Add New File/Link</h3>
                         <form onSubmit={handleAddResource}>
-                            <div style={{marginBottom: '10px'}}>
-                                <input type="text" placeholder="Title (e.g. Chapter 1 Notes)" value={newTitle} onChange={(e)=>setNewTitle(e.target.value)} required style={{width:'100%', padding:'10px', boxSizing:'border-box'}} />
-                            </div>
-                            <div style={{marginBottom: '10px'}}>
-                                <input type="text" placeholder="Link (e.g. https://google.com/myfile.pdf)" value={newLink} onChange={(e)=>setNewLink(e.target.value)} required style={{width:'100%', padding:'10px', boxSizing:'border-box'}} />
-                            </div>
-                            <div style={{marginBottom: '10px'}}>
-                                <select value={newType} onChange={(e)=>setNewType(e.target.value)} style={{width:'100%', padding:'10px'}}>
-                                    <option value="PDF">PDF Document</option>
-                                    <option value="Video">Video Link</option>
-                                    <option value="Link">Website Link</option>
-                                </select>
-                            </div>
-                            <button type="submit" style={{width:'100%', padding:'10px', backgroundColor:'#2980b9', color:'white', border:'none', borderRadius:'5px', cursor:'pointer', fontWeight:'bold'}}>
-                                Upload Resource
-                            </button>
+                            <input type="text" placeholder="Title" value={newTitle} onChange={(e)=>setNewTitle(e.target.value)} required style={{width:'100%', padding:'10px', marginBottom:'10px', boxSizing:'border-box'}} />
+                            <input type="text" placeholder="Link" value={newLink} onChange={(e)=>setNewLink(e.target.value)} required style={{width:'100%', padding:'10px', marginBottom:'10px', boxSizing:'border-box'}} />
+                            <select value={newType} onChange={(e)=>setNewType(e.target.value)} style={{width:'100%', padding:'10px', marginBottom:'10px'}}>
+                                <option value="PDF">PDF Document</option>
+                                <option value="Video">Video Link</option>
+                                <option value="Link">Website Link</option>
+                            </select>
+                            <button type="submit" style={{width:'100%', padding:'10px', backgroundColor:'#2980b9', color:'white', border:'none', borderRadius:'5px', cursor:'pointer'}}>Upload</button>
                         </form>
                     </div>
                 )}
                 
                 <hr style={{ margin: '30px 0', border: '0', borderTop: '1px solid #eee' }} />
                 
-                {/* List of Resources */}
+                {/* Resource List */}
                 <h3>📂 Course Resources</h3>
-                {resources.length === 0 ? (
-                    <p style={{ color: '#bdc3c7', fontStyle:'italic' }}>No resources yet. Be the first to add one!</p>
-                ) : (
+                {resources.length === 0 ? <p style={{color:'#999'}}>No resources yet.</p> : (
                     <ul style={{ listStyle: 'none', padding: 0 }}>
                         {resources.map((res) => (
                             <li key={res._id} style={{ padding: '15px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ display:'flex', alignItems:'center'}}>
-                                    <span style={{ fontSize:'24px', marginRight:'15px' }}>
-                                        {res.type === 'PDF' ? '📄' : res.type === 'Video' ? '🎥' : '🔗'}
-                                    </span>
-                                    <div>
-                                        <strong style={{ display:'block', color:'#34495e' }}>{res.title}</strong>
-                                        <span style={{ fontSize: '12px', color:'#95a5a6' }}>{res.type}</span>
-                                    </div>
-                                </div>
-                                <a href={res.fileUrl} target="_blank" rel="noopener noreferrer" style={{ padding:'5px 15px', border:'1px solid #3498db', borderRadius:'20px', color: '#3498db', textDecoration: 'none', fontSize:'13px', fontWeight:'bold' }}>
-                                    Open
-                                </a>
+                                <div><strong>{res.title}</strong> <span style={{fontSize:'12px', color:'#999'}}>({res.type})</span></div>
+                                <a href={res.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#3498db', fontWeight:'bold', textDecoration:'none' }}>Open</a>
                             </li>
                         ))}
                     </ul>
                 )}
+
+                {/* --- THIS IS THE NEW PART --- */}
+                
+                <hr style={{ margin: '30px 0', border: '0', borderTop: '1px solid #eee' }} />
+                
+                {/* 1. Task Manager Component */}
+                <TaskManager courseId={id} />
+
+                <hr style={{ margin: '30px 0', border: '0', borderTop: '1px solid #eee' }} />
+
+                {/* 2. Feedback Component (New) */}
+                <FeedbackSection courseId={id} />
+                <hr style={{ margin: '30px 0', border: '0', borderTop: '1px solid #eee' }} />
+    
+    {/* Chat Component */}
+    <ChatBox courseId={id} />
+
             </div>
-            {/* Add the Task Manager Section */}
-    <TaskManager courseId={id} />
         </div>
     );
 };
