@@ -15,6 +15,7 @@
     app.use('/api/auth', require('./routes/authRoutes'));
     app.use('/api/courses', require('./routes/courseRoutes'));
     app.use('/api/feedback', require('./routes/feedbackRoutes'));
+    app.use('/api/messages', require('./routes/messageRoutes'));
 
     app.get('/', (req, res) => res.send('✅ DarsYar API is Running!'));
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
