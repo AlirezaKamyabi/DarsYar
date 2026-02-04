@@ -73,3 +73,20 @@ exports.addResource = async (req, res) => {
         res.status(201).json(resource);
     } catch (error) { res.status(400).json({ message: 'Invalid data' }); }
 };
+// @desc    Delete a course (Only by creator)
+exports.deleteCourse = async (req, res) => {
+    try {
+        const course = await Course.findById(req.params.id);
+        if (!course) return res.status(404).json({ message: 'Course not found' });
+
+        // Check if the user is the creator
+        if (course.user.toString() !== req.user.id) {
+            return res.status(401).json({ message: 'User not authorized to delete this' });
+        }
+
+        await course.deleteOne();
+        res.json({ message: 'Course removed' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};

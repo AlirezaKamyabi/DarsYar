@@ -1,11 +1,11 @@
-import ChatBox from './ChatBox';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 // Import our components
-import TaskManager from './TaskManager';     // <--- The Task List
-import FeedbackSection from './FeedbackSection'; // <--- NEW: The Reviews
+import TaskManager from './TaskManager';     
+import FeedbackSection from './FeedbackSection'; 
+import ChatBox from './ChatBox';
 
 const CourseDetails = () => {
     const { id } = useParams();
@@ -31,6 +31,7 @@ const CourseDetails = () => {
 
     const fetchDetails = async () => {
         try {
+            // Fixed double slash in URL
             const { data } = await axios.get(`http://localhost:5000/api/courses/${id}`);
             setCourse(data.course);
             setResources(data.resources);
@@ -43,6 +44,7 @@ const CourseDetails = () => {
         e.preventDefault();
         try {
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            // Fixed double slash in URL
             await axios.post(`http://localhost:5000/api/courses/${id}/resources`, 
                 { title: newTitle, type: newType, fileUrl: newLink }, config);
             
@@ -59,21 +61,38 @@ const CourseDetails = () => {
     if (!course) return <div style={{textAlign:'center', marginTop: '50px'}}>Loading...</div>;
 
     return (
-        <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
+        <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
             {/* Back Button */}
             <button onClick={() => navigate('/dashboard')} style={{ marginBottom: '20px', padding: '8px 15px', cursor: 'pointer', border:'none', background:'transparent', color:'#555', fontSize: '16px' }}>
                 ← Back to Dashboard
             </button>
             
-            <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+            <div style={{ backgroundColor: 'white', padding: 'clamp(15px, 5vw, 40px)', borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
                 
-                {/* Header */}
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                {/* Responsive Header */}
+                <div style={{ 
+                    display:'flex', 
+                    justifyContent:'space-between', 
+                    alignItems:'center', 
+                    flexWrap: 'wrap', 
+                    gap: '15px' 
+                }}>
                     <div>
-                        <h1 style={{ color: '#2c3e50', margin:0 }}>{course.courseName}</h1>
+                        <h1 style={{ color: '#2c3e50', margin:0, fontSize: 'clamp(22px, 6vw, 32px)' }}>{course.courseName}</h1>
                         <p style={{ color: '#7f8c8d', margin:'5px 0' }}>{course.semester} | Dr. {course.instructor}</p>
                     </div>
-                    <button onClick={() => setShowForm(!showForm)} style={{ padding: '10px 20px', backgroundColor: '#27ae60', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
+                    <button 
+                        onClick={() => setShowForm(!showForm)} 
+                        style={{ 
+                            padding: '10px 20px', 
+                            backgroundColor: '#27ae60', 
+                            color: 'white', 
+                            border: 'none', 
+                            borderRadius: '5px', 
+                            cursor: 'pointer', 
+                            fontWeight: 'bold',
+                            whiteSpace: 'nowrap' 
+                        }}>
                         {showForm ? 'Close Form' : '+ Add Resource'}
                     </button>
                 </div>
@@ -90,7 +109,7 @@ const CourseDetails = () => {
                                 <option value="Video">Video Link</option>
                                 <option value="Link">Website Link</option>
                             </select>
-                            <button type="submit" style={{width:'100%', padding:'10px', backgroundColor:'#2980b9', color:'white', border:'none', borderRadius:'5px', cursor:'pointer'}}>Upload</button>
+                            <button type="submit" style={{width:'100%', padding:'10px', backgroundColor:'#2980b9', color:'white', border:'none', borderRadius:'5px', cursor:'pointer', fontWeight:'bold'}}>Upload</button>
                         </form>
                     </div>
                 )}
@@ -102,7 +121,7 @@ const CourseDetails = () => {
                 {resources.length === 0 ? <p style={{color:'#999'}}>No resources yet.</p> : (
                     <ul style={{ listStyle: 'none', padding: 0 }}>
                         {resources.map((res) => (
-                            <li key={res._id} style={{ padding: '15px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <li key={res._id} style={{ padding: '15px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                                 <div><strong>{res.title}</strong> <span style={{fontSize:'12px', color:'#999'}}>({res.type})</span></div>
                                 <a href={res.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#3498db', fontWeight:'bold', textDecoration:'none' }}>Open</a>
                             </li>
@@ -110,21 +129,17 @@ const CourseDetails = () => {
                     </ul>
                 )}
 
-                {/* --- THIS IS THE NEW PART --- */}
-                
                 <hr style={{ margin: '30px 0', border: '0', borderTop: '1px solid #eee' }} />
                 
-                {/* 1. Task Manager Component */}
                 <TaskManager courseId={id} />
 
                 <hr style={{ margin: '30px 0', border: '0', borderTop: '1px solid #eee' }} />
 
-                {/* 2. Feedback Component (New) */}
                 <FeedbackSection courseId={id} />
+                
                 <hr style={{ margin: '30px 0', border: '0', borderTop: '1px solid #eee' }} />
     
-    {/* Chat Component */}
-    <ChatBox courseId={id} />
+                <ChatBox courseId={id} />
 
             </div>
         </div>

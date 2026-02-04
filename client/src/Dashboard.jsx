@@ -5,14 +5,10 @@ import { useNavigate, Link } from 'react-router-dom';
 const Dashboard = () => {
     const [courses, setCourses] = useState([]);
     const [showForm, setShowForm] = useState(false);
-    const [mode, setMode] = useState('create'); // 'create' or 'join'
-    
-    // Create Form Data
+    const [mode, setMode] = useState('create');
     const [semesterName, setSemesterName] = useState('');
     const [courseName, setCourseName] = useState('');
     const [instructor, setInstructor] = useState('');
-
-    // Join Form Data
     const [joinId, setJoinId] = useState('');
 
     const navigate = useNavigate();
@@ -49,8 +45,17 @@ const Dashboard = () => {
         } catch (error) { alert('Error joining class. Check the ID.'); }
     };
 
+    const handleDelete = async (courseId) => {
+        if (window.confirm("Delete this class forever?")) {
+            try {
+                await axios.delete(`http://localhost:5000/api/courses/${courseId}`, config);
+                fetchCourses();
+            } catch (error) { alert("Only the creator can delete this."); }
+        }
+    };
+
     const resetForm = () => {
-        setCourseName(''); setInstructor(''); setJoinId('');
+        setCourseName(''); setInstructor(''); setJoinId(''); setShowForm(false);
         fetchCourses();
     };
 
@@ -88,17 +93,15 @@ const Dashboard = () => {
                             <button onClick={()=>setMode('create')} style={mode==='create' ? styles.tabActive : styles.tab}>Create New</button>
                             <button onClick={()=>setMode('join')} style={mode==='join' ? styles.tabActive : styles.tab}>Join Existing</button>
                         </div>
-
                         {mode === 'create' ? (
                             <form onSubmit={handleCreate} style={{display:'flex', flexDirection:'column', gap:'15px'}}>
-                                <input type="text" placeholder="Semester (e.g. Fall 2025)" value={semesterName} onChange={(e)=>setSemesterName(e.target.value)} required style={styles.input} />
+                                <input type="text" placeholder="Semester" value={semesterName} onChange={(e)=>setSemesterName(e.target.value)} required style={styles.input} />
                                 <input type="text" placeholder="Lesson Name" value={courseName} onChange={(e)=>setCourseName(e.target.value)} required style={styles.input} />
-                                <input type="text" placeholder="Professor Name" value={instructor} onChange={(e)=>setInstructor(e.target.value)} required style={styles.input} />
+                                <input type="text" placeholder="Professor" value={instructor} onChange={(e)=>setInstructor(e.target.value)} required style={styles.input} />
                                 <button type="submit" style={styles.submitBtn}>Create</button>
                             </form>
                         ) : (
                             <form onSubmit={handleJoin} style={{display:'flex', flexDirection:'column', gap:'15px'}}>
-                                <p style={{fontSize:'14px', color:'#666'}}>Ask your classmate for the <strong>Class ID</strong> found in the URL (e.g. 64f2...)</p>
                                 <input type="text" placeholder="Paste Class ID here..." value={joinId} onChange={(e)=>setJoinId(e.target.value)} required style={styles.input} />
                                 <button type="submit" style={styles.submitBtn}>Join Class</button>
                             </form>
@@ -112,15 +115,20 @@ const Dashboard = () => {
                         <div style={styles.grid}>
                             {groupedCourses[semester].map(course => (
                                 <div key={course._id} style={styles.courseCard}>
-                                    <div style={styles.cardHeader}>
-                                        <div style={styles.iconCircle}>📚</div>
-                                        <div>
-                                            <h3 style={styles.courseTitle}>{course.courseName}</h3>
-                                            <span style={styles.prof}>By {course.instructor}</span>
+                                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+                                        <div style={styles.cardHeader}>
+                                            <div style={styles.iconCircle}>📚</div>
+                                            <div>
+                                                <h3 style={styles.courseTitle}>{course.courseName}</h3>
+                                                <span style={styles.prof}>By {course.instructor}</span>
+                                            </div>
                                         </div>
+                                        {course.user === user._id && (
+                                            <button onClick={() => handleDelete(course._id)} style={styles.deleteBtn}>🗑️</button>
+                                        )}
                                     </div>
-                                    <div style={{fontSize:'10px', color:'#aaa', margin:'10px 0'}}>ID: {course._id}</div>
-                                    <Link to={`/course/${course._id}`} style={{textDecoration:'none'}}>
+                                    <div style={{fontSize:'10px', color:'#aaa', marginTop:'10px'}}>ID: {course._id}</div>
+                                    <Link to={`/course/${course._id}`} style={{textDecoration:'none', marginTop:'auto'}}>
                                         <button style={styles.viewBtn}>Open Class &rarr;</button>
                                     </Link>
                                 </div>
@@ -144,20 +152,21 @@ const styles = {
     headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom:'1px solid #ddd', paddingBottom:'20px' },
     heading: { fontSize: '32px', color: '#2d3436', margin: 0 },
     subHeading: { color: '#636e72', marginTop: '5px' },
-    addBtn: { padding: '12px 25px', backgroundColor: '#6c5ce7', color: 'white', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 15px rgba(108, 92, 231, 0.4)' },
+    addBtn: { padding: '12px 25px', backgroundColor: '#6c5ce7', color: 'white', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer' },
     formCard: { backgroundColor: 'white', padding: '30px', borderRadius: '10px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', maxWidth: '500px', margin: '0 auto 40px auto' },
-    tab: { flex: 1, padding: '10px', backgroundColor: '#f0f0f0', border: 'none', borderRadius: '5px', cursor: 'pointer', color:'#666' },
-    tabActive: { flex: 1, padding: '10px', backgroundColor: '#6c5ce7', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight:'bold' },
-    input: { width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #ddd', fontSize:'14px', boxSizing:'border-box' },
-    submitBtn: { width: '100%', padding: '12px', backgroundColor: '#00b894', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' },
+    tab: { flex: 1, padding: '10px', backgroundColor: '#f0f0f0', border: 'none', borderRadius: '5px', cursor: 'pointer' },
+    tabActive: { flex: 1, padding: '10px', backgroundColor: '#6c5ce7', color: 'white', border: 'none', borderRadius: '5px' },
+    input: { width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #ddd', boxSizing:'border-box' },
+    submitBtn: { width: '100%', padding: '12px', backgroundColor: '#00b894', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight:'bold' },
     semesterTitle: { fontSize: '20px', color: '#6c5ce7', marginBottom: '20px', paddingLeft: '10px', borderLeft: '4px solid #6c5ce7' },
     grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '30px' },
-    courseCard: { backgroundColor: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', border: '1px solid #f0f0f0', transition: 'transform 0.2s', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '180px' },
+    courseCard: { backgroundColor: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', border: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', height: '200px' },
     cardHeader: { display: 'flex', gap: '15px' },
     iconCircle: { width: '50px', height: '50px', borderRadius: '50%', backgroundColor: '#f0f3ff', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '24px' },
-    courseTitle: { margin: '0 0 5px 0', color: '#2d3436', fontSize:'18px' },
+    courseTitle: { margin: '0', color: '#2d3436', fontSize:'18px' },
     prof: { color: '#b2bec3', fontSize: '14px' },
-    viewBtn: { width: '100%', padding: '10px', backgroundColor: '#fff', color: '#6c5ce7', border: '1px solid #6c5ce7', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', marginTop: 'auto' }
+    deleteBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' },
+    viewBtn: { width: '100%', padding: '10px', backgroundColor: '#fff', color: '#6c5ce7', border: '1px solid #6c5ce7', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }
 };
 
 export default Dashboard;

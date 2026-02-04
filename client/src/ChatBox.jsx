@@ -14,11 +14,6 @@ const ChatBox = ({ courseId }) => {
         return () => clearInterval(interval);
     }, [courseId]);
 
-    // Auto-scroll to bottom when new message arrives
-    useEffect(() => {
-        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
-
     const fetchMessages = async () => {
         try {
             const { data } = await axios.get(`http://localhost:5000/api/messages/${courseId}`);

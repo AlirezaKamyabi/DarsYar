@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const { getCourses, createCourse, joinCourse, getCourseDetails, addResource } = require('../controllers/courseController');
+const { getCourses, createCourse, joinCourse, getCourseDetails, addResource, deleteCourse } = require('../controllers/courseController');
 
 // ... (Keep the protect middleware code same as before) ...
 const protect = (req, res, next) => { /* ... keep existing code ... */ 
@@ -21,5 +21,8 @@ router.post('/', protect, createCourse);
 router.post('/join', protect, joinCourse); // <--- NEW LINE
 router.get('/:id', getCourseDetails);
 router.post('/:id/resources', protect, addResource);
+
+router.delete('/:id', protect, deleteCourse);
+// Make sure you add deleteCourse to the list of imports at the top of this file!
 
 module.exports = router;
